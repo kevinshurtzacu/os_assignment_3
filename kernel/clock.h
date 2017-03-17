@@ -4,8 +4,17 @@
 #include "kernel/kernel.h"
 #include "arch_clock.h"
 
-/* ms counter, resets every five seconds, used for adaptive scheduling */
+/* recent_time is a millisecond counter; it resets every five seconds and is
+ * used for adaptive scheduling.  recent_time is set in init_clock in clock.c.
+ *
+ * RECENT_RESET is a true / false flag used to signal when it is time to reset
+ * the "recent runtime" counters in the process table.  1 = TRUE, 0 = FALSE
+ *
+ * Responsibility for reading and resetting the RECENT_RESET flag is delegated
+ * to proc.c in the scheduling functions
+ */
 extern u64_t recent_time;
+extern int RECENT_RESET;
 
 int boot_cpu_init_timer(unsigned freq);
 int app_cpu_init_timer(unsigned freq);

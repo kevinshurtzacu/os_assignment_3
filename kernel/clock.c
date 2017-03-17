@@ -54,6 +54,9 @@ init_clock(void)
 	/* Initialize the "recent time" counter to 0 */
 	recent_time = 0;
 
+	/* Initialize the RECENT_RESET flag to FALSE */
+	RECENT_RESET = 0;
+
 	/* Initialize clock information structure. */
 	memset(&kclockinfo, 0, sizeof(kclockinfo));
 
@@ -106,13 +109,20 @@ int timer_int_handler(void)
 		} else {
 			kclockinfo.realtime++;
 		}
-
-		/* keep track of five-second blocks of time.  Every five seconds,
-		 * reset the "recent time" clock.
-		 */
-		recent_time = kclockinfo.realtime % 5000;
 	}
 
+	/* keep track of five-second blocks of time.  Every five seconds,
+	 * reset the "recent time" clock.
+	 */
+	recent_time = kclockinfo.realtime % 5000;
+
+	/* check if the RECENT_RESET flag should be checked.  Reset even if
+	 * the counter has only reached 4998, since sometimes
+	 * kclockinfo.realtime is incremented by 2
+	 */
+	 if (recent_time >= 4998)
+	 	RECENT_RESET |= 1; /* Bitwise operations are fast */
+	
 	/* Update user and system accounting times. Charge the current process
 	 * for user time. If the current process is not billable, that is, if a
 	 * non-user process is running, charge the billable process for system

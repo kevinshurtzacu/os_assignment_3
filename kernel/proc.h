@@ -7,8 +7,8 @@
 #ifndef __ASSEMBLY__
 
 /* Here is the declaration of the process table.  It contains all process
- * data, including registers, flags, scheduling priority, memory map, 
- * accounting, message passing (IPC) information, and so on. 
+ * data, including registers, flags, scheduling priority, memory map,
+ * accounting, message passing (IPC) information, and so on.
  *
  * Many assembly code routines reference fields in it.  The offsets to these
  * fields are defined in the assembler include file sconst.h.  When changing
@@ -27,6 +27,9 @@ struct proc {
   volatile u32_t p_rts_flags;	/* process is runnable only if zero */
   volatile u32_t p_misc_flags;	/* flags that do not suspend the process */
 
+  /* "recent time" counter */
+  u64_t p_recent_time;      /* time spent in the most recent 5000 ms block */
+  
   char p_priority;		/* current process priority */
   u64_t p_cpu_time_left;	/* time left to use the cpu */
   unsigned p_quantum_size_ms;	/* assigned time quantum in ms
@@ -270,7 +273,7 @@ struct proc {
 #define proc_nr(p) 	  ((p)->p_nr)
 
 #define isokprocn(n)      ((unsigned) ((n) + NR_TASKS) < NR_PROCS + NR_TASKS)
-#define isemptyn(n)       isemptyp(proc_addr(n)) 
+#define isemptyn(n)       isemptyp(proc_addr(n))
 #define isemptyp(p)       ((p)->p_rts_flags == RTS_SLOT_FREE)
 #define iskernelp(p)	  ((p) < BEG_USER_ADDR)
 #define iskerneln(n)	  ((n) < 0)
