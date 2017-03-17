@@ -80,6 +80,9 @@ int do_fork(struct proc * caller, message * m_ptr)
   rpc->p_virt_left = 0;		/* disable, clear the process-virtual timers */
   rpc->p_prof_left = 0;
 
+  /* set child process "recent time" to 0 */
+  rpc->recent_time = 0;
+
   /* Mark process name as being a forked copy */
   namelen = strlen(rpc->p_name);
 #define FORKSTR "*F"
@@ -98,7 +101,7 @@ int do_fork(struct proc * caller, message * m_ptr)
   rpc->p_tick_cycles = 0;
   cpuavg_init(&rpc->p_cpuavg);
 
-  /* If the parent is a privileged process, take away the privileges from the 
+  /* If the parent is a privileged process, take away the privileges from the
    * child process and inhibit it from running by setting the NO_PRIV flag.
    * The caller should explicitly set the new privileges before executing.
    */
@@ -116,7 +119,7 @@ int do_fork(struct proc * caller, message * m_ptr)
   	RTS_SET(rpc, RTS_VMINHIBIT);
   }
 
-  /* 
+  /*
    * Only one in group should have RTS_SIGNALED, child doesn't inherit tracing.
    */
   RTS_UNSET(rpc, (RTS_SIGNALED | RTS_SIG_PENDING | RTS_P_STOP));

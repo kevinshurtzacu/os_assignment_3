@@ -137,6 +137,7 @@ void proc_init(void)
 		rp->p_scheduler = NULL;		/* no user space scheduler */
 		rp->p_priority = 0;		/* no priority */
 		rp->p_quantum_size_ms = 0;	/* no quantum size */
+		rp->recent_time = 0 /* "recent time" begins at 0 */
 
 		/* arch-specific initialization */
 		arch_proc_reset(rp);
@@ -1590,13 +1591,6 @@ int cancel_async(struct proc *src_ptr, struct proc *dst_ptr)
 
 asyn_error:
   return(OK);
-}
-
-/*===========================================================================*
- *				clear_recent					     *
- *===========================================================================*/
-void clear_recent() {
-
 }
 
 /*===========================================================================*
