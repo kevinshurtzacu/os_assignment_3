@@ -7,7 +7,7 @@
  * Changes:
  *   Aug 18, 2006   removed direct hardware access etc, MinixPPC (Ingmar Alting)
  *   Oct 08, 2005   reordering and comment editing (A. S. Woodhull)
- *   Mar 18, 2004   clock interface moved to SYSTEM task (Jorrit N. Herder) 
+ *   Mar 18, 2004   clock interface moved to SYSTEM task (Jorrit N. Herder)
  *   Sep 30, 2004   source code documentation updated  (Jorrit N. Herder)
  *   Sep 24, 2004   redesigned alarm timers  (Jorrit N. Herder)
  */
@@ -25,15 +25,15 @@
 #endif
 
 /* Function prototype for PRIVATE functions.
- */ 
+ */
 static void load_update(void);
 
 /* The CLOCK's timers queue. The functions in <minix/timers.h> operate on this.
- * Each system process possesses a single synchronous alarm timer. If other 
- * kernel parts want to use additional timers, they must declare their own 
+ * Each system process possesses a single synchronous alarm timer. If other
+ * kernel parts want to use additional timers, they must declare their own
  * persistent (static) timer structure, which can be passed to the clock
  * via (re)set_kernel_timer().
- * When a timer expires its watchdog function is run by the CLOCK task. 
+ * When a timer expires its watchdog function is run by the CLOCK task.
  */
 static minix_timer_t *clock_timers;	/* queue of CLOCK timers */
 
@@ -50,6 +50,9 @@ init_clock(void)
 {
 	char *value;
 	int i;
+
+	/* Initialize the "recent time" counter to 0 */
+	recent_time = 0;
 
 	/* Initialize clock information structure. */
 	memset(&kclockinfo, 0, sizeof(kclockinfo));
@@ -103,6 +106,11 @@ int timer_int_handler(void)
 		} else {
 			kclockinfo.realtime++;
 		}
+
+		/* keep track of five-second blocks of time.  Every five seconds,
+		 * reset the "recent time" clock.
+		 */
+		recent_time = kclockinfo.realtime % 5000;
 	}
 
 	/* Update user and system accounting times. Charge the current process
@@ -235,7 +243,7 @@ void set_kernel_timer(
   int arg				/* argument for watchdog function */
 )
 {
-/* Insert the new timer in the active timers list. Always update the 
+/* Insert the new timer in the active timers list. Always update the
  * next timeout time by setting it to the front of the active list.
  */
   (void)tmrs_settimer(&clock_timers, tp, exp_time, watchdog, arg, NULL, NULL);
@@ -257,7 +265,7 @@ void reset_kernel_timer(
 }
 
 /*===========================================================================*
- *				load_update				     * 
+ *				load_update				     *
  *===========================================================================*/
 static void load_update(void)
 {

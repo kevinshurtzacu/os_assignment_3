@@ -4,6 +4,9 @@
 #include "kernel/kernel.h"
 #include "arch_clock.h"
 
+/* ms counter, resets every five seconds, used for adaptive scheduling */
+extern u64_t recent_time;
+
 int boot_cpu_init_timer(unsigned freq);
 int app_cpu_init_timer(unsigned freq);
 
