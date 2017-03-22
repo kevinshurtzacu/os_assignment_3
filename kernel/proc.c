@@ -129,7 +129,7 @@ void proc_init(void)
 	int i;
 
 	/* seed random number generator */
-	srand(get_uptime());
+	srand(kclockinfo.uptime);
 
 	/* Clear the process table. Announce each slot as empty and set up
 	 * mappings for proc_addr() and proc_nr() macros. Do the same for the
