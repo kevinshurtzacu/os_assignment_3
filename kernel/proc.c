@@ -42,6 +42,9 @@
 #include "spinlock.h"
 #include "arch_proto.h"
 
+/* include random number generation */
+#include <stdlib.h>
+
 #include <minix/syslib.h>
 
 /* Scheduling and message passing functions */
@@ -124,6 +127,9 @@ void proc_init(void)
 	struct proc * rp;
 	struct priv *sp;
 	int i;
+
+	/* seed random number generator */
+	srand(get_uptime());
 
 	/* Clear the process table. Announce each slot as empty and set up
 	 * mappings for proc_addr() and proc_nr() macros. Do the same for the
@@ -1607,7 +1613,7 @@ void enqueue(
  * This function can be used x-cpu as it always uses the queues of the cpu the
  * process is assigned to.
  */
-  int q = TASK_Q;	 		/* scheduling queue to use */
+  int q = rp->p_priority;	 		/* scheduling queue to use */
   struct proc **rdy_head, **rdy_tail;
 
   assert(proc_is_runnable(rp));
@@ -1628,24 +1634,19 @@ void enqueue(
       rp->p_nextready = NULL;		/* mark new end */
   }
 
-  /* Because this is a first come first serve system, no process should have
-   * the authority to preempt another process.
-   */
-  /*
   if (cpuid == rp->p_cpu) {
-	  /
+	  /*
 	   * enqueueing a process with a higher priority than the current one,
 	   * it gets preempted. The current process must be preemptible. Testing
 	   * the priority also makes sure that a process does not preempt itself
-	   /
+	   */
 	  struct proc * p;
 	  p = get_cpulocal_var(proc_ptr);
 	  assert(p);
 	  if((p->p_priority > rp->p_priority) &&
 			  (priv(p)->s_flags & PREEMPTIBLE))
-		  RTS_SET(p, RTS_PREEMPTED); / calls dequeue() /
+		  RTS_SET(p, RTS_PREEMPTED); /* calls dequeue() */
   }
-  */
 #ifdef CONFIG_SMP
   /*
    * if the process was enqueued on a different cpu and the cpu is idle, i.e.
@@ -1677,7 +1678,7 @@ void enqueue(
  */
 static void enqueue_head(struct proc *rp)
 {
-  const int q = TASK_Q;	 		/* scheduling queue to use */
+  const int q = rp->p_priority;	 		/* scheduling queue to use */
 
   struct proc **rdy_head, **rdy_tail;
 
@@ -1731,7 +1732,7 @@ void dequeue(struct proc *rp)
  * This function can operate x-cpu as it always removes the process from the
  * queue of the cpu the process is currently assigned to.
  */
-  int q = TASK_Q;		/* queue to use */
+  int q = rp->p_priority;		/* queue to use */
   struct proc **xpp;			/* iterate over queue */
   struct proc *prev_xp;
   u64_t tsc, tsc_delta;
@@ -1800,12 +1801,14 @@ static struct proc * pick_proc(void)
  */
   register struct proc *rp;			/* process to run */
   struct proc **rdy_head;
-  int q;				/* iterate over queues */
+  /* int q; */				/* iterate over queues */ /* no longer necessary */
 
-  /* Check each of the scheduling queues for ready processes. The number of
+  /* This will be replaced for the random selection algorithm!
+   *
+   * Check each of the scheduling queues for ready processes. The number of
    * queues is defined in proc.h, and priorities are set in the task table.
    * If there are no processes ready to run, return NULL.
-   */
+   *
   rdy_head = get_cpulocal_var(run_q_head);
   for (q=0; q < NR_SCHED_QUEUES; q++) {
 	if(!(rp = rdy_head[q])) {
@@ -1814,10 +1817,26 @@ static struct proc * pick_proc(void)
 	}
 	assert(proc_is_runnable(rp));
 	if (priv(rp)->s_flags & BILLABLE)
-		get_cpulocal_var(bill_ptr) = rp; /* bill for system time */
+		get_cpulocal_var(bill_ptr) = rp; / bill for system time /
 	return rp;
   }
-  return NULL;
+  */
+
+  rdy_head = get_cpulocal_var(run_q_head);
+
+  /* select random queues until an acceptable one is found */
+  while (!(rp = rdy_head[rand() % NR_SCHED_QUEUES])) {
+	TRACE(VF_PICKPROC, printf("cpu %d queue %d empty\n", cpuid, q););
+  }
+
+  /* ensure the process is runnable */
+  assert(proc_is_runnable(rp));
+
+  /* try to bill the function */
+  if (priv(rp)->s_flags & BILLABLE)
+  	get_cpulocal_var(bill_ptr) = rp; /* bill for system time */
+
+  return rp;
 }
 
 /*===========================================================================*
