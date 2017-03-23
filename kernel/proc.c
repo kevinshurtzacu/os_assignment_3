@@ -128,7 +128,7 @@ void proc_init(void)
 	int i;
 
 	/* seed random number generator */
-	lfsr113_seed(kclockinfo.uptime);
+	seed_lfsr113(kclockinfo.uptime);
 
 	/* Clear the process table. Announce each slot as empty and set up
 	 * mappings for proc_addr() and proc_nr() macros. Do the same for the
@@ -1819,7 +1819,7 @@ static u32_t lfsr113_z4 = 12345;
  *
  * Ideally, they'd also be taken from a random, uniform distribution.  Oh well.
  */
-static double seed_lfsr113(u32_t seed) {
+static void seed_lfsr113(u32_t seed) {
 	lfsr113_z1 = seed;
 	lfsr113_z2 = seed;
 	lfsr113_z1 = seed;
