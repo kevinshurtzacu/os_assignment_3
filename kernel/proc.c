@@ -1828,8 +1828,8 @@ static struct proc * pick_proc(void)
   */
 
   /* if the 5000 ms block has passed, its time to clear the timers */
-  if (*(get_recent_reset())) {
-	  *(get_recent_reset()) &= 0;	/* reset flag */
+  if (RECENT_RESET) {
+	  RECENT_RESET &= 0;	/* reset flag */
 
 	  /* clear process table of recent time */
 	  int i;					/* index for moving through process table */

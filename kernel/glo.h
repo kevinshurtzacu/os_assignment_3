@@ -3,8 +3,8 @@
 
 /* Global variables used in the kernel. This file contains the declarations;
  * storage space for the variables is allocated in table.c, because EXTERN is
- * defined as extern unless the _TABLE definition is seen. We rely on the 
- * compiler's default initialization (0) for several global variables. 
+ * defined as extern unless the _TABLE definition is seen. We rely on the
+ * compiler's default initialization (0) for several global variables.
  */
 #ifdef _TABLE
 #undef EXTERN
@@ -31,6 +31,10 @@ extern struct minix_kerninfo minix_kerninfo;
 EXTERN struct k_randomness krandom; 	/* gather kernel random information */
 
 EXTERN vir_bytes minix_kerninfo_user;
+
+/* adaptive scheduling helper variables */
+EXTERN u64_t recent_time;
+EXTERN u64_t RECENT_RESET;
 
 #define kmess kmessages
 #define kloadinfo loadinfo
