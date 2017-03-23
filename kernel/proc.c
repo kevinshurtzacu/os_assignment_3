@@ -127,7 +127,7 @@ void proc_init(void)
 	int i;
 
 	/* seed random number generator */
-	srand(kclockinfo.uptime);
+	srandom(kclockinfo.uptime);
 
 	/* Clear the process table. Announce each slot as empty and set up
 	 * mappings for proc_addr() and proc_nr() macros. Do the same for the
@@ -1823,7 +1823,7 @@ static struct proc * pick_proc(void)
   rdy_head = get_cpulocal_var(run_q_head);
 
   /* select random queues until an acceptable one is found */
-  while (!(rp = rdy_head[rand() % NR_SCHED_QUEUES])) {
+  while (!(rp = rdy_head[random() % NR_SCHED_QUEUES])) {
 	TRACE(VF_PICKPROC, printf("cpu %d queue %d empty\n", cpuid, q););
   }
 
