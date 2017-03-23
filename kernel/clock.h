@@ -13,8 +13,16 @@
  * Responsibility for reading and resetting the RECENT_RESET flag is delegated
  * to proc.c in the scheduling functions
  */
-EXTERN u64_t recent_time;
-EXTERN u64_t RECENT_RESET;
+EXTERN u64_t *recent_time;
+EXTERN u64_t *RECENT_RESET;
+
+u64_t *get_recent_time() {
+    return recent_time;
+}
+
+u64_t *get_recent_reset() {
+    return RECENT_RESET;
+}
 
 int boot_cpu_init_timer(unsigned freq);
 int app_cpu_init_timer(unsigned freq);
