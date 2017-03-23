@@ -1832,19 +1832,23 @@ static struct proc * pick_proc(void)
 	  RECENT_RESET &= 0;	/* reset flag */
 
 	  /* clear process table of recent time */
-	  for (*xpp = BEG_PROC_ADDR, i = -NR_TASKS; *xpp < END_PROC_ADDR; ++(*xpp), ++i) {
-	  	  (*xpp)->p_recent_time = 0;
+	  int i;					/* index for moving through process table */
+	  struct proc *clear_ptr;	/* pointer for clearing process members */
+
+	  for (clear_ptr = BEG_PROC_ADDR, i = -NR_TASKS; clear_ptr < END_PROC_ADDR;
+		  	  ++clear_ptr, ++i) {
+	  	  clear_ptr->p_recent_time = 0;
 
 	  	  /* update the total time "offset" */
-	  	  (*xpp)->p_total_time_last = (*xpp)->p_user_time + (*xpp)->p_sys_time;
+	  	  clear_ptr->p_total_time_last = clear_ptr->p_user_time + clear_ptr->p_sys_time;
   	  }
   }
 
   u64_t lowest_recent = UINT_MAX;	/* lowest "recent time" found thus far */
 
   /* loop through every process in queue 0 (TASK_Q) */
-  for (*xpp = get_cpu_var_ptr(rp->p_cpu, run_q_head[q]); *xpp;
-		  *xpp = &(*xpp)->p_nextready) {
+  for (xpp = get_cpu_var_ptr(rp->p_cpu, run_q_head[q]); *xpp;
+		  xpp = &(*xpp)->p_nextready) {
 	  /* update "recent time" for each process */
 	  (*xpp)->p_recent_time = (*xpp)->p_user_time + (*xpp)->p_sys_time;
 	  (*xpp)->p_recent_time = (*xpp)->p_recent_time - (*xpp)->p_total_time_last;
