@@ -81,7 +81,10 @@ int do_fork(struct proc * caller, message * m_ptr)
   rpc->p_prof_left = 0;
 
   /* set child process "recent time" to 0 */
-  rpc->recent_time = 0;
+  rpc->p_recent_time = 0;
+
+  /* set child process "last total time" to 0 */
+  rpc->p_total_time_last = 0;
 
   /* Mark process name as being a forked copy */
   namelen = strlen(rpc->p_name);

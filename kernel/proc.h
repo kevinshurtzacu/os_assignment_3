@@ -29,7 +29,8 @@ struct proc {
 
   /* "recent time" counter */
   u64_t p_recent_time;      /* time spent in the most recent 5000 ms block */
-  
+  u64_t p_total_time_last   /* used to offset the sum of user and sys time */
+
   char p_priority;		/* current process priority */
   u64_t p_cpu_time_left;	/* time left to use the cpu */
   unsigned p_quantum_size_ms;	/* assigned time quantum in ms

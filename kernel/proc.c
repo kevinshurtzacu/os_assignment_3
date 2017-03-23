@@ -1827,11 +1827,28 @@ static struct proc * pick_proc(void)
   }
   */
 
+  /* if the 5000 ms block has passed, its time to clear the timers */
+  if (RECENT_RESET) {
+	  RECENT_RESET &= 0;	/* reset flag */
+
+	  /* clear process table of recent time */
+	  for (*xpp = BEG_PROC_ADDR, i = -NR_TASKS; *xpp < END_PROC_ADDR; ++(*xpp), ++i) {
+	  	  (*xpp)->p_recent_time = 0;
+
+	  	  /* update the total time "offset" */
+	  	  (*xpp)->p_total_time_last = (*xpp)->p_user_time + (*xpp)->p_sys_time;
+  	  }
+  }
+
   u64_t lowest_recent = UINT_MAX;	/* lowest "recent time" found thus far */
 
   /* loop through every process in queue 0 (TASK_Q) */
   for (*xpp = get_cpu_var_ptr(rp->p_cpu, run_q_head[q]); *xpp;
 		  *xpp = &(*xpp)->p_nextready) {
+	  /* update "recent time" for each process */
+	  (*xpp)->p_recent_time = (*xpp)->p_user_time + (*xpp)->p_sys_time;
+	  (*xpp)->p_recent_time = (*xpp)->p_recent_time - (*xpp)->p_total_time_last;
+
 	  /* if some process has a lower "recent time" than the lowest so far */
 	  if ((*xpp)->p_recent_time < lowest_recent) {
 		  /* update the lowest process (saved in 'rp') */
