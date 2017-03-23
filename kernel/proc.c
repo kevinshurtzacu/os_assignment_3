@@ -60,8 +60,6 @@ static int deadlock(int function, register struct proc *caller,
 static int try_async(struct proc *caller_ptr);
 static int try_one(endpoint_t receive_e, struct proc *src_ptr,
 	struct proc *dst_ptr);
-static void seed_lfsr113(u32_t seed);
-static double lfsr113();
 static struct proc * pick_proc(void);
 static void enqueue_head(struct proc *rp);
 
@@ -128,7 +126,7 @@ void proc_init(void)
 	int i;
 
 	/* seed random number generator */
-	seed_lfsr113(kclockinfo.uptime);
+	srand(kclockinfo.uptime);
 
 	/* Clear the process table. Announce each slot as empty and set up
 	 * mappings for proc_addr() and proc_nr() macros. Do the same for the
@@ -1787,64 +1785,6 @@ void dequeue(struct proc *rp)
 #endif
 }
 
-
-/*===========================================================================*
- *				lfsr113, seed_lfsr113					     *
- *===========================================================================*/
-
-/* Random number generation algorithm cited on StackOverflow and first proposed
- * by Mathmatitian Pierre L'ecuyer.
- *
- * StackOverflow Link:
- *     http://stackoverflow.com/questions/1167253/implementation-of-rand
- * Original Paper Link:
- *     http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.43.3639
- */
-
-/* I know, I know - they're global - but this is the simplest way to make them
- * "seedable"; since this is not a header file, I believe that this should
- * be okay.
- */
-static u32_t lfsr113_z1 = 12345;
-static u32_t lfsr113_z2 = 12345;
-static u32_t lfsr113_z3 = 12345;
-static u32_t lfsr113_z4 = 12345;
-
-/* Certainly not the best way to seed things, its not important enough to
- * warrant significant revision.
- *
- * For details on doing it right, check out page 5 of L'cuyer's paper in the
- * "Implemntations" section.  He states that the initial seeds must be "larger
- * than 1, 7, 15, and 127, respectively".  Check.
- *
- * Ideally, they'd also be taken from a random, uniform distribution.  Oh well.
- */
-static void seed_lfsr113(u32_t seed) {
-	lfsr113_z1 = seed;
-	lfsr113_z2 = seed;
-	lfsr113_z1 = seed;
-	lfsr113_z1 = seed;
-}
-
-/* Generates a random(ish) number between 0 and 1 */
-static double lfsr113() {
-	u32_t b;
-
-	b  = (((lfsr113_z1 << 6) ^ lfsr113_z1) >> 13);
-	lfsr113_z1 = (((lfsr113_z1 & 4294967294U) << 18) ^ b);
-
-	b  = (((lfsr113_z2 << 2) ^ lfsr113_z2) >> 27);
-	lfsr113_z2 = (((lfsr113_z2 & 4294967288U) <<  2) ^ b);
-
-	b  = (((lfsr113_z3 << 13) ^ lfsr113_z3) >> 21);
-	lfsr113_z3 = (((lfsr113_z3 & 4294967280U) <<  7) ^ b);
-
-	b  = (((lfsr113_z4 << 3) ^ lfsr113_z4) >> 12);
-	lfsr113_z4 = (((lfsr113_z4 & 4294967168U) << 13) ^ b);
-
-	return ((lfsr113_z1 ^ lfsr113_z2 ^ lfsr113_z3 ^ lfsr113_z4) * 2.3283064365387e-10);
-}
-
 /*===========================================================================*
  *				pick_proc				     *
  *===========================================================================*/
@@ -1882,7 +1822,7 @@ static struct proc * pick_proc(void)
   rdy_head = get_cpulocal_var(run_q_head);
 
   /* select random queues until an acceptable one is found */
-  while (!(rp = rdy_head[(u32_t)(lfsr113() * NR_SCHED_QUEUES)])) {
+  while (!(rp = rdy_head[rand() % NR_SCHED_QUEUES])) {
 	TRACE(VF_PICKPROC, printf("cpu %d queue %d empty\n", cpuid, q););
   }
 
