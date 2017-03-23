@@ -35,6 +35,7 @@
 #include <signal.h>
 #include <assert.h>
 #include <string.h>
+#include <limits.h>
 
 #include "kernel/kernel.h"
 #include "vm.h"
@@ -1608,7 +1609,7 @@ void enqueue(
  * This function can be used x-cpu as it always uses the queues of the cpu the
  * process is assigned to.
  */
-  int q = rp->p_priority;	 		/* scheduling queue to use */
+  int q = TASK_Q;	 		/* scheduling queue to use */
   struct proc **rdy_head, **rdy_tail;
 
   assert(proc_is_runnable(rp));
@@ -1673,7 +1674,7 @@ void enqueue(
  */
 static void enqueue_head(struct proc *rp)
 {
-  const int q = rp->p_priority;	 		/* scheduling queue to use */
+  const int q = TASK_Q;	 		/* scheduling queue to use */
 
   struct proc **rdy_head, **rdy_tail;
 
@@ -1727,7 +1728,7 @@ void dequeue(struct proc *rp)
  * This function can operate x-cpu as it always removes the process from the
  * queue of the cpu the process is currently assigned to.
  */
-  int q = rp->p_priority;		/* queue to use */
+  int q = TASK_Q;		/* queue to use */
   struct proc **xpp;			/* iterate over queue */
   struct proc *prev_xp;
   u64_t tsc, tsc_delta;
@@ -1749,14 +1750,16 @@ void dequeue(struct proc *rp)
   prev_xp = NULL;
   for (xpp = get_cpu_var_ptr(rp->p_cpu, run_q_head[q]); *xpp;
 		  xpp = &(*xpp)->p_nextready) {
-      if (*xpp == rp) {				/* found process to remove */
-          *xpp = (*xpp)->p_nextready;		/* replace with next chain */
-          if (rp == rdy_tail[q]) {		/* queue tail removed */
-              rdy_tail[q] = prev_xp;		/* set new tail */
-	  }
+      if (*xpp == rp) {					/* found process to remove */
+          *xpp = (*xpp)->p_nextready;	/* replace with next chain */
+
+		  if (rp == rdy_tail[q]) {		/* queue tail removed */
+              rdy_tail[q] = prev_xp;	/* set new tail */
+	  	  }
 
           break;
       }
+
       prev_xp = *xpp;				/* save previous in chain */
   }
 
@@ -1794,15 +1797,24 @@ static struct proc * pick_proc(void)
  *
  * This function always uses the run queues of the local cpu!
  */
-  register struct proc *rp;			/* process to run */
-  struct proc **rdy_head;
-  int q;				/* iterate over queues */
+  register struct proc *rp = NULL;	/* process to run */
+  struct proc **xpp;				/* current process pointer pointer */
+  int q = TASK_Q;					/* (now fixed on TASK_Q) */
 
   /* Check each of the scheduling queues for ready processes. The number of
    * queues is defined in proc.h, and priorities are set in the task table.
    * If there are no processes ready to run, return NULL.
    */
+
+  /* Psych! We're not checking queues for processes since we've stuffed all
+   * the processes into the first queue (TASK_Q).  Instead, we'll be looping
+   * through the queue and selecting the processes that's had the smallest
+   * share of "recent time".
+   *
+   * Behold - the code that used to be!
+   *
   rdy_head = get_cpulocal_var(run_q_head);
+
   for (q=0; q < NR_SCHED_QUEUES; q++) {
 	if(!(rp = rdy_head[q])) {
 		TRACE(VF_PICKPROC, printf("cpu %d queue %d empty\n", cpuid, q););
@@ -1810,10 +1822,25 @@ static struct proc * pick_proc(void)
 	}
 	assert(proc_is_runnable(rp));
 	if (priv(rp)->s_flags & BILLABLE)
-		get_cpulocal_var(bill_ptr) = rp; /* bill for system time */
+		get_cpulocal_var(bill_ptr) = rp; / bill for system time /
 	return rp;
   }
-  return NULL;
+  */
+
+  u64_t lowest_recent = UINT_MAX;	/* lowest "recent time" found thus far */
+
+  /* loop through every process in queue 0 (TASK_Q) */
+  for (*xpp = get_cpu_var_ptr(rp->p_cpu, run_q_head[q]); *xpp;
+		  *xpp = &(*xpp)->p_nextready) {
+	  /* if some process has a lower "recent time" than the lowest so far */
+	  if ((*xpp)->p_recent_time < lowest_recent) {
+		  /* update the lowest process (saved in 'rp') */
+		  rp = (*xpp);
+		  lowest_recent = (*xpp)->p_recent_time;
+	  }
+  }
+
+  return rp;
 }
 
 /*===========================================================================*
