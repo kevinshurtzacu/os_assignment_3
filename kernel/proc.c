@@ -133,12 +133,12 @@ void proc_init(void)
 	for (rp = BEG_PROC_ADDR, i = -NR_TASKS; rp < END_PROC_ADDR; ++rp, ++i) {
 		rp->p_rts_flags = RTS_SLOT_FREE;/* initialize free slot */
 		rp->p_magic = PMAGIC;
-		rp->p_nr = i;			/* proc number from ptr */
+		rp->p_nr = i;				/* proc number from ptr */
 		rp->p_endpoint = _ENDPOINT(0, rp->p_nr); /* generation no. 0 */
 		rp->p_scheduler = NULL;		/* no user space scheduler */
-		rp->p_priority = 0;		/* no priority */
+		rp->p_priority = 0;			/* no priority */
 		rp->p_quantum_size_ms = 0;	/* no quantum size */
-		rp->recent_time = 0 /* "recent time" begins at 0 */
+		rp->p_recent_time = 0; 		/* "recent time" begins at 0 */
 
 		/* arch-specific initialization */
 		arch_proc_reset(rp);
@@ -146,7 +146,7 @@ void proc_init(void)
 	for (sp = BEG_PRIV_ADDR, i = 0; sp < END_PRIV_ADDR; ++sp, ++i) {
 		sp->s_proc_nr = NONE;		/* initialize as free */
 		sp->s_id = (sys_id_t) i;	/* priv structure index */
-		ppriv_addr[i] = sp;		/* priv ptr from number */
+		ppriv_addr[i] = sp;			/* priv ptr from number */
 		sp->s_sig_mgr = NONE;		/* clear signal managers */
 		sp->s_bak_sig_mgr = NONE;
 	}
