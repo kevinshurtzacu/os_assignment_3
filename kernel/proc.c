@@ -60,7 +60,7 @@ static int deadlock(int function, register struct proc *caller,
 static int try_async(struct proc *caller_ptr);
 static int try_one(endpoint_t receive_e, struct proc *src_ptr,
 	struct proc *dst_ptr);
-static double seed_lfsr113(u32_t seed);
+static void seed_lfsr113(u32_t seed);
 static double lfsr113();
 static struct proc * pick_proc(void);
 static void enqueue_head(struct proc *rp);
