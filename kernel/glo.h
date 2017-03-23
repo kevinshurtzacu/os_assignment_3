@@ -33,8 +33,8 @@ EXTERN struct k_randomness krandom; 	/* gather kernel random information */
 EXTERN vir_bytes minix_kerninfo_user;
 
 /* adaptive scheduling helper variables */
-EXTERN u64_t recent_time;
-EXTERN u64_t RECENT_RESET;
+u64_t recent_time = 0;
+u64_t RECENT_RESET = 0;
 
 #define kmess kmessages
 #define kloadinfo loadinfo
