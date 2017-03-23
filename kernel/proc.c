@@ -35,6 +35,7 @@
 #include <signal.h>
 #include <assert.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "kernel/kernel.h"
 #include "vm.h"
