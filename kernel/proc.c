@@ -1826,7 +1826,7 @@ static struct proc * pick_proc(void)
    * after NR_SCHED_QUEUES trials, give up.
    */
   for (q=0; q < NR_SCHED_QUEUES; q++) {
-	int q_select = random(); % NR_SCHED_QUEUES;
+	int q_select = random() % NR_SCHED_QUEUES;
 
 	if(!(rp = rdy_head[q_select])) {
   	  TRACE(VF_PICKPROC, printf("cpu %d queue %d empty\n", cpuid, q_select););
