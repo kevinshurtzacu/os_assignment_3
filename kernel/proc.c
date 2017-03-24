@@ -1825,8 +1825,22 @@ static struct proc * pick_proc(void)
   /* Try to find a randomly available process an acceptable process, but
    * after NR_SCHED_QUEUES trials, give up.
    */
-  for (q=0; q < NR_SCHED_QUEUES; q++) {
-	int q_select = random() % NR_SCHED_QUEUES;
+  /* check system processes first */
+  if(!(rp = rdy_head[TASK_Q])) {
+	TRACE(VF_PICKPROC, printf("cpu %d queue %d empty\n", cpuid, q_select););
+  } else {
+	assert(proc_is_runnable(rp));
+
+  	if (priv(rp)->s_flags & BILLABLE)
+  	  get_cpulocal_var(bill_ptr) = rp; /* bill for system time */
+
+  	return rp;
+  }
+
+  /* then do the rest */
+  for (q = 1; q < NR_SCHED_QUEUES; q++) {
+	/* ensure process is in range */
+	int q_select = (random() % (NR_SCHED_QUEUES - 1)) + 1;
 
 	if(!(rp = rdy_head[q_select])) {
   	  TRACE(VF_PICKPROC, printf("cpu %d queue %d empty\n", cpuid, q_select););
@@ -1836,7 +1850,7 @@ static struct proc * pick_proc(void)
 	assert(proc_is_runnable(rp));
 
 	if (priv(rp)->s_flags & BILLABLE)
-  	  get_cpulocal_var(bill_ptr) = rp; /* bill for system time */
+	  get_cpulocal_var(bill_ptr) = rp; /* bill for system time */
 
 	return rp;
   }
