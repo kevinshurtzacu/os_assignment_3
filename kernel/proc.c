@@ -1799,7 +1799,7 @@ static struct proc * pick_proc(void)
  */
   register struct proc *rp;			/* process to run */
   struct proc **rdy_head;
-  /* int q; */				/* iterate over queues */ /* no longer necessary */
+  int q; 							/* iterate over queues */
 
   /* This will be replaced for the random selection algorithm!
    *
@@ -1822,19 +1822,27 @@ static struct proc * pick_proc(void)
 
   rdy_head = get_cpulocal_var(run_q_head);
 
-  /* select random queues until an acceptable one is found */
-  while (!(rp = rdy_head[random() % NR_SCHED_QUEUES])) {
-	TRACE(VF_PICKPROC, printf("cpu %d queue %d empty\n", cpuid, q););
+  /* Try to find a randomly available process an acceptable process, but
+   * after NR_SCHED_QUEUES trials, give up.
+   */
+  for (q=0; q < NR_SCHED_QUEUES; q++) {
+	int q_select = random(); % NR_SCHED_QUEUES;
+
+	if(!(rp = rdy_head[q_select])) {
+  	  TRACE(VF_PICKPROC, printf("cpu %d queue %d empty\n", cpuid, q_select););
+  	  continue;
+    }
+
+	assert(proc_is_runnable(rp));
+
+	if (priv(rp)->s_flags & BILLABLE)
+  	  get_cpulocal_var(bill_ptr) = rp; /* bill for system time */
+
+	return rp;
   }
 
-  /* ensure the process is runnable */
-  assert(proc_is_runnable(rp));
-
-  /* try to bill the function */
-  if (priv(rp)->s_flags & BILLABLE)
-  	get_cpulocal_var(bill_ptr) = rp; /* bill for system time */
-
-  return rp;
+  /* process unfound after NR_SCHED_QUEUES trials */
+  return NULL;
 }
 
 /*===========================================================================*
