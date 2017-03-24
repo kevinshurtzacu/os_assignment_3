@@ -1815,7 +1815,7 @@ static struct proc * pick_proc(void)
 	}
 	assert(proc_is_runnable(rp));
 	if (priv(rp)->s_flags & BILLABLE)
-		get_cpulocal_var(bill_ptr) = rp; /* bill for system time */
+		get_cpulocal_var(bill_ptr) = rp; / bill for system time /
 	return rp;
   }
   */
