@@ -1842,7 +1842,7 @@ static struct proc * pick_proc(void)
   /* then do the rest */
   for (q = 7; q < NR_SCHED_QUEUES; q++) {
 	/* ensure process is in range, ignore idle */
-	int q_select = (random() % (NR_SCHED_QUEUES - USER_Q)) + USER_Q;
+	int q_select = (random() % (IDLE_Q - USER_Q)) + USER_Q;
 
 	if(!(rp = rdy_head[q_select])) {
   	  TRACE(VF_PICKPROC, printf("cpu %d queue %d empty\n", cpuid, q_select););
