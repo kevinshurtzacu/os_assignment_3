@@ -1825,8 +1825,7 @@ static struct proc * pick_proc(void)
   /* Try to find a randomly available process an acceptable process, but
    * after NR_SCHED_QUEUES trials, give up.
    */
-  /* check system processes first */
-  for (q = 0; q < 7; q++) { /* 7 is the queue wherein user processes begin */
+  for (q = TASK_Q; q < USER_Q; q++) { /* 7 is the queue wherein user processes begin */
 	if(!(rp = rdy_head[q])) {
 		TRACE(VF_PICKPROC, printf("cpu %d queue %d empty\n", cpuid, q););
 		continue;
@@ -1840,7 +1839,7 @@ static struct proc * pick_proc(void)
   }
 
   /* then do the rest */
-  for (q = 7; q < NR_SCHED_QUEUES; q++) {
+  for (q = USER_Q; q < NR_SCHED_QUEUES; q++) {
 	/* ensure process is in range, ignore idle */
 	int q_select = (random() % (NR_SCHED_QUEUES - USER_Q)) + USER_Q;
 
